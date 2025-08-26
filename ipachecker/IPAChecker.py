@@ -1,3 +1,4 @@
+# This python script provided by norep on discord, credits to him
 import os
 import sys
 import glob
@@ -463,3 +464,4 @@ class IPAChecker:
         
         self.console.print("\n")
         self.console.print(summary_table)
+# This python script provided by norep on discord, credits to him
