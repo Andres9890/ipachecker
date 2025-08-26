@@ -1,0 +1,227 @@
+name: Unit Tests
+
+on: 
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        exclude:
+          # Exclude some combinations to reduce CI load
+          - os: windows-latest
+            python-version: '3.8'
+          - os: macos-latest
+            python-version: '3.8'
+
+    name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: 'x64'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt', '**/test-requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
+            ${{ runner.os }}-pip-
+
+      - name: Install system dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl
+
+      - name: Install system dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          # curl should already be available on macOS
+          curl --version
+
+      - name: Install system dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          # curl is available in Windows 10+ by default
+          curl --version
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e .
+          pip install -r test-requirements.txt
+
+      - name: Verify installation
+        run: |
+          ipachecker --version
+          python -c "import ipachecker; print(f'ipachecker {ipachecker.__version__} installed successfully')"
+
+      - name: Run unit tests
+        run: |
+          pytest tests/ -v --tb=short --cov=ipachecker --cov-report=xml --cov-report=term-missing
+
+      - name: Run integration tests (if any)
+        run: |
+          # Run any integration tests that don't require actual IPA files
+          python run_tests.py --check-env
+        continue-on-error: true
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  test-minimal:
+    runs-on: ubuntu-latest
+    name: Test with minimal dependencies
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'  # Use older Python to test compatibility
+
+      - name: Install minimal dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Install only required dependencies, not optional ones
+          pip install docopt-ng macholib
+          pip install -e . --no-deps
+
+      - name: Test basic functionality
+        run: |
+          ipachecker --version
+          python -c "import ipachecker.IPAChecker; print('Basic import successful')"
+
+  test-edge-cases:
+    runs-on: ubuntu-latest
+    name: Test edge cases and error handling
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install -r test-requirements.txt
+
+      - name: Create test files for edge cases
+        run: |
+          mkdir -p test_files
+          # Create empty file
+          touch test_files/empty.ipa
+          # Create text file with .ipa extension
+          echo "not an ipa file" > test_files/fake.ipa
+          # Create directory with .ipa extension
+          mkdir -p test_files/directory.ipa
+
+      - name: Test error handling
+        run: |
+          # Test with non-existent file
+          ipachecker /nonexistent/file.ipa || echo "Expected failure for non-existent file"
+          
+          # Test with empty file
+          ipachecker test_files/empty.ipa || echo "Expected failure for empty file"
+          
+          # Test with fake IPA file
+          ipachecker test_files/fake.ipa || echo "Expected failure for fake IPA"
+          
+          # Test with directory
+          ipachecker test_files/directory.ipa || echo "Expected failure for directory"
+          
+          # Test with invalid URL
+          ipachecker "https://invalid-domain-that-does-not-exist.com/app.ipa" || echo "Expected failure for invalid URL"
+
+      - name: Test batch operations with errors
+        run: |
+          # Create a batch file with mixed valid/invalid entries
+          echo "/nonexistent/file.ipa" > test_files/batch_list.txt
+          echo "https://invalid-url.com/app.ipa" >> test_files/batch_list.txt
+          
+          # Test batch from file
+          ipachecker --batch-analysis test_files/batch_list.txt --json || echo "Batch test completed with expected errors"
+          
+          # Test batch from empty directory
+          mkdir -p test_files/empty_dir
+          ipachecker --batch-analysis test_files/empty_dir --json || echo "Empty directory test completed"
+
+      - name: Cleanup test files
+        run: |
+          rm -rf test_files/
+
+  performance-test:
+    runs-on: ubuntu-latest
+    name: Performance and memory usage test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install -r test-requirements.txt
+          pip install memory-profiler psutil
+
+      - name: Run performance tests
+        run: |
+          python run_tests.py --performance
+        continue-on-error: true
+
+      - name: Memory usage test
+        run: |
+          python -c "
+          import psutil
+          import os
+          from ipachecker.IPAChecker import IPAChecker
+          
+          # Monitor memory usage
+          process = psutil.Process(os.getpid())
+          initial_memory = process.memory_info().rss / 1024 / 1024  # MB
+          
+          # Create multiple checker instances
+          checkers = [IPAChecker() for _ in range(10)]
+          
+          final_memory = process.memory_info().rss / 1024 / 1024  # MB
+          print(f'Memory usage: {initial_memory:.1f}MB -> {final_memory:.1f}MB')
+          print(f'Memory increase: {final_memory - initial_memory:.1f}MB')
+          
+          # Memory increase should be reasonable
+          assert final_memory - initial_memory < 100, f'Excessive memory usage: {final_memory - initial_memory:.1f}MB'
+          "
