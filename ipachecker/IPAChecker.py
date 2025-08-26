@@ -100,8 +100,19 @@ class IPAChecker:
                 self.console.print(f"[blue]Downloading from:[/blue] {url}")
                 self.console.print(f"[blue]Saving to:[/blue] {download_path}")
             
-            # Use curl to download with progress
-            cmd = ['curl', '-L', '-o', download_path, '--progress-bar', url]
+            # Use curl to download with progress and SSL options to handle certificate revocation issues
+            cmd = [
+                'curl', 
+                '-L',  # Follow redirects
+                '-o', download_path,  # Output file
+                '--progress-bar',  # Show progress bar
+                '--ssl-no-revoke',  # Disable certificate revocation checking (fixes Windows schannel issue)
+                '--retry', '3',  # Retry on transient failures
+                '--retry-delay', '2',  # Wait between retries
+                '--connect-timeout', '30',  # Connection timeout
+                '--max-time', '300',  # Maximum time for the entire operation
+                url
+            ]
             
             if self.verbose:
                 # Show curl progress
@@ -122,9 +133,13 @@ class IPAChecker:
                 process.wait()
             
             if process.returncode != 0:
+                if self.verbose:
+                    self.console.print(f"[red]Curl failed with return code: {process.returncode}[/red]")
                 return None
                 
             if not os.path.exists(download_path) or os.path.getsize(download_path) == 0:
+                if self.verbose:
+                    self.console.print(f"[red]Downloaded file is missing or empty[/red]")
                 return None
                 
             return download_path
