@@ -32,19 +32,23 @@ from ipachecker.utils import is_valid_url, sanitize_filename
 
 class IPAChecker:
     
-    def __init__(self, verbose=False, work_dir='~/.ipachecker'):
+    def __init__(self, verbose=False, work_dir='~/.ipachecker', delete_downloaded=True):
         """
         IPAChecker - Analyze iOS IPA files for metadata and encryption status.
 
-        :param verbose:     A boolean, True means all loggings will be
-                           printed out to stdout.
-        :param work_dir:   A path to directory that will be used for
-                          temporary files. Default to '~/.ipachecker'.
+        :param verbose:           A boolean, True means all loggings will be
+                                 printed out to stdout.
+        :param work_dir:         A path to directory that will be used for
+                                temporary files. Default to '~/.ipachecker'.
+        :param delete_downloaded: A boolean, True means downloaded files will be
+                                deleted after analysis.
         """
         self.verbose = verbose
         self.work_dir = os.path.expanduser(work_dir)
         self.console = Console()
         self.logger = logging.getLogger(__name__)
+        self.delete_downloaded = delete_downloaded
+        self.downloaded_files = set()  # Track downloaded files for cleanup
         
         if not self.verbose:
             self.logger.setLevel(logging.ERROR)
@@ -57,14 +61,18 @@ class IPAChecker:
         Check an IPA file from local path or URL.
         
         :param input_source: Path to .ipa file or URL to download .ipa file.
-        :return:            Dictionary containing analysis results.
+        :return:            Dictionary containing analysis results and metadata.
         """
         try:
+            was_downloaded = False
+            
             # Determine if input is URL or local path
             if is_valid_url(input_source):
                 ipa_file = self._download_ipa(input_source)
                 if not ipa_file:
                     return {"error": f"Failed to download IPA from {input_source}"}
+                was_downloaded = True
+                self.downloaded_files.add(ipa_file)
             else:
                 ipa_file = input_source
                 
@@ -76,11 +84,107 @@ class IPAChecker:
                 return {"error": f"File must be a .ipa file: {ipa_file}"}
                 
             # Analyze the IPA
-            return self._analyze_ipa(ipa_file)
+            result = self._analyze_ipa(ipa_file)
+            
+            # Add metadata about the analysis
+            if "error" not in result:
+                result["_metadata"] = {
+                    "was_downloaded": was_downloaded,
+                    "source": input_source,
+                    "analyzed_at": __import__('datetime').datetime.now().isoformat()
+                }
+            
+            return result
             
         except Exception as e:
             self.logger.exception("Error during IPA check")
             return {"error": str(e)}
+    
+    def cleanup_downloaded_files(self):
+        """
+        Clean up downloaded files if delete_downloaded is enabled.
+        """
+        if not self.delete_downloaded:
+            return
+            
+        cleaned_count = 0
+        for file_path in self.downloaded_files.copy():
+            try:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                    cleaned_count += 1
+                    if self.verbose:
+                        self.console.print(f"[dim]Deleted downloaded file: {file_path}[/dim]")
+                self.downloaded_files.discard(file_path)
+            except Exception as e:
+                self.logger.error(f"Failed to delete {file_path}: {e}")
+        
+        if self.verbose and cleaned_count > 0:
+            self.console.print(f"[green]Cleaned up {cleaned_count} downloaded file(s)[/green]")
+    
+    def batch_analyze_folder(self, folder_path):
+        """
+        Analyze all .ipa files in a folder.
+        
+        :param folder_path: Path to folder containing .ipa files
+        :return:           List of analysis results
+        """
+        if not os.path.exists(folder_path):
+            return [{"error": f"Folder not found: {folder_path}"}]
+        
+        if not os.path.isdir(folder_path):
+            return [{"error": f"Path is not a directory: {folder_path}"}]
+        
+        # Find all .ipa files in the folder
+        ipa_files = glob.glob(os.path.join(folder_path, "*.ipa"))
+        
+        if not ipa_files:
+            return [{"error": f"No .ipa files found in folder: {folder_path}"}]
+        
+        results = []
+        if self.verbose:
+            self.console.print(f"[blue]Found {len(ipa_files)} .ipa file(s) in folder[/blue]")
+        
+        for ipa_file in ipa_files:
+            if self.verbose:
+                self.console.print(f"\n[yellow]Processing:[/yellow] {os.path.basename(ipa_file)}")
+            
+            result = self.check_ipa(ipa_file)
+            results.append(result)
+        
+        return results
+    
+    def batch_analyze_from_file(self, file_path):
+        """
+        Analyze .ipa files or URLs listed in a text file.
+        
+        :param file_path: Path to text file containing paths/URLs (one per line)
+        :return:         List of analysis results
+        """
+        if not os.path.exists(file_path):
+            return [{"error": f"File not found: {file_path}"}]
+        
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                lines = [line.strip() for line in f.readlines() if line.strip()]
+        except Exception as e:
+            return [{"error": f"Failed to read file {file_path}: {e}"}]
+        
+        if not lines:
+            return [{"error": f"No valid entries found in file: {file_path}"}]
+        
+        results = []
+        if self.verbose:
+            self.console.print(f"[blue]Found {len(lines)} entries in file[/blue]")
+        
+        for i, line in enumerate(lines, 1):
+            if self.verbose:
+                self.console.print(f"\n[yellow]Processing {i}/{len(lines)}:[/yellow] {line}")
+            
+            result = self.check_ipa(line)
+            results.append(result)
+        
+        return results
     
     def _download_ipa(self, url):
         """
@@ -334,3 +438,28 @@ class IPAChecker:
         self.console.print(table)
         self.console.print(f"\n[bold]Obscura-format filename:[/bold]")
         self.console.print(f"{results['obscuraFilename']}")
+    
+    def print_batch_summary(self, results):
+        """Print a summary table for batch analysis results."""
+        if not results:
+            return
+        
+        # Filter out errors for summary
+        valid_results = [r for r in results if "error" not in r]
+        error_count = len(results) - len(valid_results)
+        
+        summary_table = Table(title="Batch Analysis Summary")
+        summary_table.add_column("Property", style="cyan")
+        summary_table.add_column("Value", style="white")
+        
+        summary_table.add_row("Total Files", str(len(results)))
+        summary_table.add_row("Successfully Analyzed", str(len(valid_results)))
+        summary_table.add_row("Errors", str(error_count))
+        
+        if valid_results:
+            encrypted_count = sum(1 for r in valid_results if r.get("encrypted", True))
+            summary_table.add_row("Encrypted Apps", str(encrypted_count))
+            summary_table.add_row("Decrypted Apps", str(len(valid_results) - encrypted_count))
+        
+        self.console.print("\n")
+        self.console.print(summary_table)
