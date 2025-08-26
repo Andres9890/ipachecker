@@ -93,3 +93,19 @@ def validate_ipa_file(filepath):
         return False, f"Error validating file: {e}"
         
     return True, None
+
+
+def get_latest_pypi_version(package_name="ipachecker"):
+    """
+    Request PyPI for the latest version
+    Returns the version string, or None if it cannot be determined
+    """
+    import json
+    import urllib.request
+    try:
+        url = f"https://pypi.org/pypi/{package_name}/json"
+        with urllib.request.urlopen(url, timeout=5) as response:
+            data = json.load(response)
+            return data["info"]["version"]
+    except Exception:
+        return None

@@ -34,6 +34,7 @@ import json
 
 from ipachecker.IPAChecker import IPAChecker
 from ipachecker import __version__
+from ipachecker.utils import get_latest_pypi_version
 
 
 def prompt_save_results(results):
@@ -251,6 +252,12 @@ def main():
         # Clean up downloaded files if enabled
         if not dont_delete:
             checker.cleanup_downloaded_files()
+        
+        # Version check after operations complete (success or fail)
+        latest_version = get_latest_pypi_version()
+        if latest_version and latest_version != __version__:
+            print(f"\033[93mA newer version of ipachecker is available: \033[92m{latest_version}\033[0m")
+            print("Update with: pip install --upgrade ipachecker\n")
 
 
 if __name__ == '__main__':
