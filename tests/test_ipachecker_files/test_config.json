@@ -1,0 +1,108 @@
+{
+    "test_settings": {
+      "mock_downloads": true,
+      "use_temp_directories": true,
+      "verbose_output": false,
+      "cleanup_after_tests": true
+    },
+    "mock_responses": {
+      "successful_download": {
+        "return_code": 0,
+        "file_size": 5242880,
+        "download_time": 2.5
+      },
+      "failed_download": {
+        "return_code": 1,
+        "error_message": "curl: (6) Could not resolve host"
+      },
+      "timeout_download": {
+        "return_code": 28,
+        "error_message": "curl: (28) Operation timed out"
+      }
+    },
+    "test_ipa_configurations": [
+      {
+        "name": "encrypted_arm64_app",
+        "bundle_name": "TestApp",
+        "bundle_id": "com.test.encrypted",
+        "version": "1.0.0",
+        "min_ios": "13.0",
+        "encrypted": true,
+        "architecture": "arm64"
+      },
+      {
+        "name": "decrypted_universal_app", 
+        "bundle_name": "DecryptedApp",
+        "bundle_id": "com.test.decrypted",
+        "version": "2.1.0",
+        "min_ios": "12.0",
+        "encrypted": false,
+        "architecture": "universal"
+      },
+      {
+        "name": "legacy_32bit_app",
+        "bundle_name": "LegacyApp",
+        "bundle_id": "com.legacy.app",
+        "version": "1.0",
+        "min_ios": "8.0",
+        "encrypted": true,
+        "architecture": "armv7"
+      }
+    ],
+    "expected_results": {
+      "valid_ipa_keys": [
+        "appName",
+        "displayName", 
+        "bundleId",
+        "appVersion",
+        "minIOS",
+        "architecture",
+        "encrypted",
+        "obscuraFilename",
+        "md5",
+        "fileSize",
+        "filePath"
+      ],
+      "error_result_keys": [
+        "error"
+      ]
+    },
+    "test_urls": {
+      "valid_urls": [
+        "https://example.com/app.ipa",
+        "http://test.domain.com/files/app.ipa",
+        "https://downloads.example.org/mobile/test.ipa"
+      ],
+      "invalid_urls": [
+        "not-a-url",
+        "file.ipa", 
+        "//incomplete",
+        "https://",
+        ""
+      ]
+    },
+    "batch_test_scenarios": [
+      {
+        "name": "mixed_success_failure",
+        "inputs": [
+          "/path/to/valid1.ipa",
+          "/path/to/valid2.ipa", 
+          "/path/to/missing.ipa",
+          "https://example.com/valid3.ipa",
+          "https://invalid.com/missing.ipa"
+        ],
+        "expected_success_count": 3,
+        "expected_error_count": 2
+      },
+      {
+        "name": "all_local_files",
+        "inputs": [
+          "/path/to/app1.ipa",
+          "/path/to/app2.ipa",
+          "/path/to/app3.ipa"
+        ],
+        "expected_success_count": 3,
+        "expected_error_count": 0
+      }
+    ]
+  }

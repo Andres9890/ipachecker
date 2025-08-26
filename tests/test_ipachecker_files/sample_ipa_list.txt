@@ -1,0 +1,25 @@
+# Sample IPA file list for batch testing
+# Lines starting with # are comments and will be ignored
+
+# Local files
+/Users/test/Downloads/Instagram.ipa
+/Users/test/Downloads/WhatsApp.ipa
+/Users/test/Downloads/Spotify-decrypted.ipa
+
+# Remote URLs
+https://example.com/releases/TestApp-v1.0.ipa
+https://cdn.example.org/apps/DemoApp.ipa
+
+# Mixed with spaces and special characters
+"/Users/test/Downloads/App with Spaces.ipa"
+/Users/test/Downloads/Special-Characters_App.ipa
+
+# More remote URLs
+https://releases.example.com/ios/GameApp-v2.1.ipa
+https://download.example.net/mobile/UtilityApp.ipa
+
+# File with different extension (should be ignored in real usage)
+/Users/test/Downloads/NotAnApp.txt
+
+# Another local file
+/Applications/CustomApp.ipa

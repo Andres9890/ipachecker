@@ -1,0 +1,117 @@
+{
+    "single_app_encrypted": {
+      "appName": "Instagram",
+      "displayName": "Instagram",
+      "bundleId": "com.burbn.instagram",
+      "appVersion": "245.0",
+      "minIOS": "13.0",
+      "architecture": "64-bit",
+      "encrypted": true,
+      "obscuraFilename": "Instagram-(com.burbn.instagram)-245.0-(iOS_13.0)-d41d8cd98f00b204e9800998ecf8427e.ipa",
+      "md5": "d41d8cd98f00b204e9800998ecf8427e",
+      "fileSize": 125829120,
+      "filePath": "/Users/test/Downloads/Instagram-245.0.ipa"
+    },
+    "single_app_decrypted": {
+      "appName": "TestApp",
+      "displayName": "Test Application",
+      "bundleId": "com.example.testapp",
+      "appVersion": "1.0.0",
+      "minIOS": "12.0",
+      "architecture": "Universal",
+      "encrypted": false,
+      "obscuraFilename": "Test Application-(com.example.testapp)-1.0.0-(iOS_12.0)-098f6bcd4621d373cade4e832627b4f6.ipa",
+      "md5": "098f6bcd4621d373cade4e832627b4f6",
+      "fileSize": 5242880,
+      "filePath": "/Users/test/Downloads/TestApp-1.0.0-decrypted.ipa"
+    },
+    "batch_analysis_results": [
+      {
+        "appName": "WhatsApp",
+        "displayName": "WhatsApp Messenger",
+        "bundleId": "net.whatsapp.WhatsApp",
+        "appVersion": "22.14.78",
+        "minIOS": "12.0",
+        "architecture": "64-bit",
+        "encrypted": true,
+        "obscuraFilename": "WhatsApp Messenger-(net.whatsapp.WhatsApp)-22.14.78-(iOS_12.0)-5d41402abc4b2a76b9719d911017c592.ipa",
+        "md5": "5d41402abc4b2a76b9719d911017c592",
+        "fileSize": 89128960,
+        "filePath": "/Users/test/batch_test/WhatsApp.ipa"
+      },
+      {
+        "appName": "Spotify",
+        "displayName": "Spotify: Music and Podcasts",
+        "bundleId": "com.spotify.client",
+        "appVersion": "8.7.56",
+        "minIOS": "13.0",
+        "architecture": "64-bit",
+        "encrypted": false,
+        "obscuraFilename": "Spotify: Music and Podcasts-(com.spotify.client)-8.7.56-(iOS_13.0)-7694f4a66316e53c8cdd9d9954bd611d.ipa",
+        "md5": "7694f4a66316e53c8cdd9d9954bd611d",
+        "fileSize": 67108864,
+        "filePath": "/Users/test/batch_test/Spotify-decrypted.ipa"
+      },
+      {
+        "error": "File not found: /Users/test/batch_test/missing_app.ipa"
+      },
+      {
+        "appName": "OldGameApp",
+        "displayName": "Classic Game",
+        "bundleId": "com.oldgames.classic",
+        "appVersion": "1.2",
+        "minIOS": "9.0",
+        "architecture": "32-bit",
+        "encrypted": true,
+        "obscuraFilename": "Classic Game-(com.oldgames.classic)-1.2-(iOS_9.0)-c4ca4238a0b923820dcc509a6f75849b.ipa",
+        "md5": "c4ca4238a0b923820dcc509a6f75849b",
+        "fileSize": 15728640,
+        "filePath": "/Users/test/batch_test/ClassicGame.ipa"
+      }
+    ],
+    "error_cases": {
+      "corrupted_ipa": {
+        "error": "Failed to extract IPA file"
+      },
+      "missing_executable": {
+        "error": "App executable not found"
+      },
+      "invalid_plist": {
+        "error": "Failed to read app metadata"
+      },
+      "download_failed": {
+        "error": "Failed to download IPA from https://invalid-domain-that-does-not-exist.com/app.ipa"
+      },
+      "network_timeout": {
+        "error": "Network timeout while downloading from https://slow-server.example.com/large_app.ipa"
+      }
+    },
+    "edge_cases": {
+      "unicode_app_name": {
+        "appName": "测试应用",
+        "displayName": "测试应用程序",
+        "bundleId": "com.test.unicode.app",
+        "appVersion": "1.0",
+        "minIOS": "11.0",
+        "architecture": "64-bit",
+        "encrypted": false,
+        "obscuraFilename": "测试应用程序-(com.test.unicode.app)-1.0-(iOS_11.0)-e1671797c52e15f763380b45e841ec32.ipa",
+        "md5": "e1671797c52e15f763380b45e841ec32",
+        "fileSize": 3145728,
+        "filePath": "/Users/test/unicode/测试应用.ipa"
+      },
+      "very_old_ios_app": {
+        "appName": "VintageApp",
+        "displayName": "Vintage Application",
+        "bundleId": "com.vintage.oldapp",
+        "appVersion": "1.0",
+        "minIOS": "2.0",
+        "architecture": "32-bit",
+        "encrypted": true,
+        "obscuraFilename": "Vintage Application-(com.vintage.oldapp)-1.0-(iOS_2.0)-827ccb0eea8a706c4c34a16891f84e7b.ipa",
+        "md5": "827ccb0eea8a706c4c34a16891f84e7b",
+        "fileSize": 1048576,
+        "filePath": "/Users/test/vintage/VintageApp.ipa"
+      }
+    }
+  }
