@@ -6,7 +6,7 @@ import shutil
 import zipfile
 import hashlib
 import plistlib
-import subprocess
+import subprocess  # nosec B404
 import tempfile
 import json
 import logging
@@ -195,7 +195,20 @@ class IPAChecker:
         :return:    Path to downloaded file or None if failed
         """
         try:
-            filename = sanitize_filename(os.path.basename(urlparse(url).path))
+            # Validate URL to prevent CI (command injection)
+            if not is_valid_url(url):
+                if self.verbose:
+                    self.console.print(f"[red]Invalid URL format: {url}[/red]")
+                return None
+                
+            # Additional URL validation, must be HTTP or HTTPS
+            parsed_url = urlparse(url)
+            if parsed_url.scheme not in ['http', 'https']:
+                if self.verbose:
+                    self.console.print(f"[red]URL must be HTTP or HTTPS: {url}[/red]")
+                return None
+            
+            filename = sanitize_filename(os.path.basename(parsed_url.path))
             if not filename.lower().endswith('.ipa'):
                 filename += '.ipa'
                 
@@ -205,23 +218,24 @@ class IPAChecker:
                 self.console.print(f"[blue]Downloading from:[/blue] {url}")
                 self.console.print(f"[blue]Saving to:[/blue] {download_path}")
             
-            # Use curl to download with progress and SSL options to handle certificate revocation issues
+            # Construct curl command with validated inputs
+            # I intentionally do NOT use shell=True for security
             cmd = [
-                'curl', 
+                'curl',  # Fixed command, not user input
                 '-L',  # Follow redirects
-                '-o', download_path,  # Output file
+                '-o', download_path,  # Output file - path is sanitized
                 '--progress-bar',  # Show progress bar
                 '--ssl-no-revoke',  # Disable certificate revocation checking (fixes Windows schannel issue)
                 '--retry', '3',  # Retry on transient failures
                 '--retry-delay', '2',  # Wait between retries
                 '--connect-timeout', '30',  # Connection timeout
                 '--max-time', '300',  # Maximum time for the entire operation
-                url
+                url  # URL is validated above
             ]
             
             if self.verbose:
                 # Show curl progress
-                process = subprocess.Popen(cmd, stderr=subprocess.PIPE, text=True)
+                process = subprocess.Popen(cmd, stderr=subprocess.PIPE, text=True)  # nosec B603
                 
                 for line in iter(process.stderr.readline, ''):
                     if line.strip():
@@ -233,7 +247,7 @@ class IPAChecker:
                     sys.stderr.write('\n')
             else:
                 # Silent download
-                process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, 
+                process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL,   # nosec B603
                                          stderr=subprocess.DEVNULL)
                 process.wait()
             
@@ -410,7 +424,7 @@ class IPAChecker:
     
     def _calculate_md5(self, filepath):
         """Calculate MD5 hash of file."""
-        hash_md5 = hashlib.md5()
+        hash_md5 = hashlib.md5(usedforsecurity=False)  # It's used for file fingerprinting, not security, also nosec B324
         with open(filepath, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 hash_md5.update(chunk)

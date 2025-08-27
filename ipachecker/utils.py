@@ -102,9 +102,20 @@ def get_latest_pypi_version(package_name="ipachecker"):
     """
     import json
     import urllib.request
+    
     try:
+        # Validate the package name to prevent URL manipulation
+        if not re.match(r'^[a-zA-Z0-9_-]+$', package_name):
+            return None
+            
+        # Construct secure HTTPS only PyPI URL
         url = f"https://pypi.org/pypi/{package_name}/json"
-        with urllib.request.urlopen(url, timeout=5) as response:
+        
+        # To validate the URL is what we expect
+        if not url.startswith("https://pypi.org/pypi/"):
+            return None
+            
+        with urllib.request.urlopen(url, timeout=5) as response:  # nosec B310
             data = json.load(response)
             return data["info"]["version"]
     except Exception:
