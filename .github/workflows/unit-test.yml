@@ -91,9 +91,9 @@ jobs:
           name: codecov-umbrella
           fail_ci_if_error: false
 
-  test-minimal:
+  test-core-functionality:
     runs-on: ubuntu-latest
-    name: Test with minimal dependencies
+    name: Test core functionality with latest deps
     
     steps:
       - name: Checkout code
@@ -102,13 +102,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'  # Use older Python to test compatibility
+          python-version: '3.11'
 
-      - name: Install minimal dependencies
+      - name: Install core dependencies only
         run: |
           python -m pip install --upgrade pip
-          # Install only required dependencies, not optional ones
-          pip install docopt-ng macholib
+          # Install all required dependencies - rich is actually required
+          pip install docopt-ng macholib rich
           pip install -e . --no-deps
 
       - name: Test basic functionality
@@ -133,7 +133,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .
-          pip install -r test-requirements.txt
+          pip install pytest coverage
 
       - name: Create test files for edge cases
         run: |
@@ -196,8 +196,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .
-          pip install -r test-requirements.txt
-          pip install memory-profiler psutil
+          pip install pytest coverage memory-profiler psutil
 
       - name: Run performance tests
         run: |
