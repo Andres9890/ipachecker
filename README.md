@@ -100,6 +100,7 @@ ipachecker https://example.com/dl/app.ipa --dont-delete
 │ Minimum iOS           │ 2.0                                                            │
 │ Architecture          │ 32-bit                                                         │
 │ Encrypted             │ YES                                                            │
+│ Original Filename     │ example_app.ipa                                                │
 │ MD5 Hash              │ d41d8cd98f00b204e9800998ecf8427e                               │
 │ File Size             │ 67 bytes                                                       │
 └───────────────────────┴────────────────────────────────────────────────────────────────┘
@@ -186,6 +187,7 @@ Use `--json` arg for programmatic integration:
   "architecture": "64-bit",
   "encrypted": true,
   "obscuraFilename": "Instagram-(com.burbn.instagram)-245.0-(iOS_13.0)-d41d8cd98f00b204e9800998ecf8427e.ipa",
+  "originalFilename": "instagram.ipa",
   "md5": "d41d8cd98f00b204e9800998ecf8427e",
   "fileSize": 125829120,
   "filePath": "/path/to/instagram.ipa"

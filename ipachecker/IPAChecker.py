@@ -356,6 +356,7 @@ class IPAChecker:
                 "architecture": architecture,
                 "encrypted": is_encrypted,
                 "obscuraFilename": obscura_filename,
+                "originalFilename": os.path.basename(ipa_file),
                 "md5": md5_hash,
                 "fileSize": os.path.getsize(ipa_file),
                 "filePath": os.path.abspath(ipa_file),
@@ -453,6 +454,7 @@ class IPAChecker:
         encryption_text = f"{encryption_color}{'YES' if results['encrypted'] else 'NO'}"
         table.add_row("Encrypted", encryption_text)
 
+        table.add_row("Original Filename", results["originalFilename"])
         table.add_row("MD5 Hash", results["md5"])
         table.add_row("File Size", f"{results['fileSize']:,} bytes")
 
