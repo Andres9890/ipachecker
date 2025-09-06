@@ -1,9 +1,10 @@
 import os
 import re
+from typing import Optional, Tuple
 from urllib.parse import urlparse
 
 
-def is_valid_url(url):
+def is_valid_url(url: str) -> bool:
     """
     Check if a string is a valid URL.
 
@@ -17,7 +18,7 @@ def is_valid_url(url):
         return False
 
 
-def sanitize_filename(filename):
+def sanitize_filename(filename: str) -> str:
     """
     Sanitize a filename by removing/replacing invalid characters.
 
@@ -42,7 +43,7 @@ def sanitize_filename(filename):
     return name + ext
 
 
-def format_file_size(size_bytes):
+def format_file_size(size_bytes: int) -> str:
     """
     Format file size in human readable format.
 
@@ -54,15 +55,16 @@ def format_file_size(size_bytes):
 
     size_names = ["B", "KB", "MB", "GB", "TB"]
     i = 0
+    size_float = float(size_bytes)
 
-    while size_bytes >= 1024.0 and i < len(size_names) - 1:
-        size_bytes /= 1024.0
+    while size_float >= 1024.0 and i < len(size_names) - 1:
+        size_float /= 1024.0
         i += 1
 
-    return f"{size_bytes:.1f} {size_names[i]}"
+    return f"{size_float:.1f} {size_names[i]}"
 
 
-def validate_ipa_file(filepath):
+def validate_ipa_file(filepath: str) -> Tuple[bool, Optional[str]]:
     """
     Validate that a file is likely an IPA file.
 
@@ -96,7 +98,7 @@ def validate_ipa_file(filepath):
     return True, None
 
 
-def get_latest_pypi_version(package_name="ipachecker"):
+def get_latest_pypi_version(package_name: str = "ipachecker") -> Optional[str]:
     """
     Request PyPI for the latest version
     Returns the version string, or None if it cannot be determined

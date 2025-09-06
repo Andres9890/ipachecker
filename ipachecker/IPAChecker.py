@@ -10,6 +10,7 @@ import subprocess  # nosec B404
 import sys
 import tempfile
 import zipfile
+from typing import Any, Dict, List, Optional, Set, Union
 from urllib.parse import urlparse
 
 import macholib.mach_o
@@ -37,7 +38,7 @@ from ipachecker.utils import is_valid_url, sanitize_filename
 
 class IPAChecker:
 
-    def __init__(self, verbose=False, work_dir="~/.ipachecker", delete_downloaded=True):
+    def __init__(self, verbose: bool = False, work_dir: str = "~/.ipachecker", delete_downloaded: bool = True) -> None:
         """
         IPAChecker - Analyze iOS IPA files for metadata and encryption status.
 
@@ -53,7 +54,7 @@ class IPAChecker:
         self.console = Console()
         self.logger = logging.getLogger(__name__)
         self.delete_downloaded = delete_downloaded
-        self.downloaded_files = set()  # Track downloaded files for cleanup
+        self.downloaded_files: Set[str] = set()  # Track downloaded files for cleanup
 
         if not self.verbose:
             self.logger.setLevel(logging.ERROR)
@@ -61,7 +62,7 @@ class IPAChecker:
         # Create work directory
         os.makedirs(self.work_dir, exist_ok=True)
 
-    def check_ipa(self, input_source):
+    def check_ipa(self, input_source: str) -> Dict[str, Any]:
         """
         Check an IPA file from local path or URL.
 
@@ -105,7 +106,7 @@ class IPAChecker:
             self.logger.exception("Error during IPA check")
             return {"error": str(e)}
 
-    def cleanup_downloaded_files(self):
+    def cleanup_downloaded_files(self) -> None:
         """
         Clean up downloaded files if delete_downloaded is enabled.
         """
@@ -127,7 +128,7 @@ class IPAChecker:
         if self.verbose and cleaned_count > 0:
             self.console.print(f"[green]Cleaned up {cleaned_count} downloaded file(s)[/green]")
 
-    def batch_analyze_folder(self, folder_path):
+    def batch_analyze_folder(self, folder_path: str) -> List[Dict[str, Any]]:
         """
         Analyze all .ipa files in a folder.
 
@@ -159,7 +160,7 @@ class IPAChecker:
 
         return results
 
-    def batch_analyze_from_file(self, file_path):
+    def batch_analyze_from_file(self, file_path: str) -> List[Dict[str, Any]]:
         """
         Analyze .ipa files or URLs listed in a text file.
 
@@ -191,7 +192,7 @@ class IPAChecker:
 
         return results
 
-    def _download_ipa(self, url):
+    def _download_ipa(self, url: str) -> Optional[str]:
         """
         Download IPA file from URL using curl.
 
@@ -244,12 +245,13 @@ class IPAChecker:
 
             if self.verbose:
                 # Show curl progress
-                process = subprocess.Popen(cmd, stderr=subprocess.PIPE, text=True)  # nosec B603
+                process: subprocess.Popen[str] = subprocess.Popen(cmd, stderr=subprocess.PIPE, text=True)  # nosec B603
 
-                for line in iter(process.stderr.readline, ""):
-                    if line.strip():
-                        sys.stderr.write(f"\r{line.strip()}")
-                        sys.stderr.flush()
+                if process.stderr:
+                    for line in iter(process.stderr.readline, ""):
+                        if line.strip():
+                            sys.stderr.write(f"\r{line.strip()}")
+                            sys.stderr.flush()
 
                 process.wait()
                 if self.verbose:
@@ -275,7 +277,7 @@ class IPAChecker:
             self.logger.error(f"Download failed: {e}")
             return None
 
-    def _analyze_ipa(self, ipa_file):
+    def _analyze_ipa(self, ipa_file: str) -> Dict[str, Any]:
         """
         Analyze IPA file and extract metadata.
 
@@ -318,10 +320,10 @@ class IPAChecker:
                 # Step 3: Find executable (60%)
                 progress.update(task, description="Locating app executable...", completed=50)
                 exec_name = properties.get("CFBundleExecutable")
-                macho_file = glob.glob(os.path.join(extract_dir, "Payload", "*.app", exec_name))
-                if not macho_file:
+                macho_file_list = glob.glob(os.path.join(extract_dir, "Payload", "*.app", exec_name))
+                if not macho_file_list:
                     return {"error": "App executable not found"}
-                macho_file = macho_file[0]
+                macho_file = macho_file_list[0]
                 progress.update(task, completed=60)
 
                 # Step 4: Check encryption (80%)
@@ -367,28 +369,28 @@ class IPAChecker:
             if extract_dir and os.path.exists(extract_dir):
                 shutil.rmtree(extract_dir)
 
-    def _extract_ipa(self, ipa_file, extract_dir):
+    def _extract_ipa(self, ipa_file: str, extract_dir: str) -> None:
         """Extract IPA file to directory."""
         with zipfile.ZipFile(ipa_file, "r") as ipa_zip:
             ipa_zip.extractall(extract_dir)
 
-    def _get_properties(self, extract_dir):
+    def _get_properties(self, extract_dir: str) -> Optional[Dict[str, Any]]:
         """Read app metadata from Info.plist."""
-        info_plist = glob.glob(os.path.join(extract_dir, "Payload", "*.app", "Info.plist"))
+        info_plist_list = glob.glob(os.path.join(extract_dir, "Payload", "*.app", "Info.plist"))
 
-        if not info_plist:
+        if not info_plist_list:
             return None
 
-        info_plist = info_plist[0]
+        info_plist = info_plist_list[0]
 
-        with open(info_plist, "rb") as plist:
-            plist_data = plistlib.load(plist)
+        with open(info_plist, "rb") as plist_file:
+            plist_data = plistlib.load(plist_file)
             # Handle missing MinimumOSVersion for older apps
             if plist_data.get("MinimumOSVersion") is None:
                 plist_data["MinimumOSVersion"] = "2.0"
             return plist_data
 
-    def _get_cryptid(self, filename):
+    def _get_cryptid(self, filename: str) -> bool:
         """Check if the Mach-O binary is encrypted."""
         try:
             macho = macholib.MachO.MachO(filename)
@@ -405,7 +407,7 @@ class IPAChecker:
         except Exception:
             return True  # Assume encrypted if we can't determine
 
-    def _get_architecture(self, filename):
+    def _get_architecture(self, filename: str) -> str:
         """Get the architecture of the Mach-O binary."""
         try:
             macho = macholib.MachO.MachO(filename)
@@ -427,7 +429,7 @@ class IPAChecker:
         except Exception:
             return "Unknown"
 
-    def _calculate_md5(self, filepath):
+    def _calculate_md5(self, filepath: str) -> str:
         """Calculate MD5 hash of file."""
         hash_md5 = hashlib.md5(
             usedforsecurity=False
@@ -437,7 +439,7 @@ class IPAChecker:
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
 
-    def print_result_table(self, results):
+    def print_result_table(self, results: Dict[str, Any]) -> None:
         """Print results in a formatted table."""
         table = Table(title=results["displayName"])
         table.add_column("Property", style="cyan")
@@ -462,7 +464,7 @@ class IPAChecker:
         self.console.print(f"\n[bold]Obscura-format filename:[/bold]")
         self.console.print(f"{results['obscuraFilename']}")
 
-    def print_batch_summary(self, results):
+    def print_batch_summary(self, results: List[Dict[str, Any]]) -> None:
         """Print a summary table for batch analysis results."""
         if not results:
             return
