@@ -197,3 +197,6 @@ Use `--json` arg for programmatic integration:
 ### Exit Codes
 - `0`: Success
 - `1`: Analysis errors or failures
+
+>[!WARNING]
+> This tool is not affiliated with, endorsed by, or sponsored by Apple Inc.
