@@ -135,10 +135,7 @@ class IPAChecker:
 
             # Check if target file already exists
             if os.path.exists(new_path):
-                return {
-                    "success": False,
-                    "error": f"Target file already exists: {obscura_filename}"
-                }
+                return {"success": False, "error": f"Target file already exists: {obscura_filename}"}
 
             # Perform the rename
             os.rename(old_path, new_path)
@@ -147,12 +144,7 @@ class IPAChecker:
                 self.console.print(f"[green]Renamed:[/green] {os.path.basename(old_path)}")
                 self.console.print(f"[green]     To:[/green] {obscura_filename}")
 
-            return {
-                "success": True,
-                "old_path": old_path,
-                "new_path": new_path,
-                "message": "File renamed successfully"
-            }
+            return {"success": True, "old_path": old_path, "new_path": new_path, "message": "File renamed successfully"}
 
         except PermissionError as e:
             return {"success": False, "error": f"Permission denied: {e}"}
@@ -544,4 +536,6 @@ class IPAChecker:
 
         self.console.print("\n")
         self.console.print(summary_table)
+
+
 # The original python script was provided by norep on discord, credits to him

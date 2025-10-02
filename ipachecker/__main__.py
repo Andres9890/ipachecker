@@ -179,8 +179,10 @@ def main():
                             renamed_count += 1
                             print(f"   Renamed: {os.path.basename(rename_result['new_path'])}")
                         elif not quiet_mode:
-                            print(f"   Failed to rename {os.path.basename(result['filePath'])}: {rename_result['error']}")
-                
+                            print(
+                                f"   Failed to rename {os.path.basename(result['filePath'])}: {rename_result['error']}"
+                            )
+
                 if renamed_count > 0:
                     print(f"\n:: Successfully renamed {renamed_count} file(s)")
 
