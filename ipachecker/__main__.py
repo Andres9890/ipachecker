@@ -5,24 +5,25 @@
 """ipachecker - Analyze iOS IPA files for metadata and encryption status.
 
 Usage:
-  ipachecker <input>... [--output <output>] [--json] [--quiet] [--debug] [--dont-delete]
-  ipachecker --batch-analysis <path> [--output <output>] [--json] [--quiet] [--debug] [--dont-delete]
+  ipachecker <input>... [--output <output>] [--json] [--quiet] [--debug] [--dont-delete] [--rename]
+  ipachecker --batch-analysis <path> [--output <output>] [--json] [--quiet] [--debug] [--dont-delete] [--rename]
   ipachecker -h | --help
   ipachecker --version
 
 Arguments:
-  <input>                      Path to .ipa file or URL to download .ipa file.
+  <input>                      Path to .ipa file or URL to download .ipa file
   <path>                       Path to folder containing .ipa files, or path to .txt file
-                              containing paths/URLs (one per line).
+                              containing paths/URLs (one per line)
 
 Options:
-  -h --help                   Show this screen.
-  -o --output <output>        Save results to specified JSON file.
-  -j --json                   Output results as JSON to stdout.
-  -q --quiet                  Only print errors and results.
-  -d --debug                  Print all logs to stdout.
-  --dont-delete               Don't delete downloaded files after analysis.
-  --batch-analysis            Enable batch analysis mode for multiple files or URLs.
+  -h --help                   Show this screen
+  -o --output <output>        Save results to specified JSON file
+  -j --json                   Output results as JSON to stdout
+  -q --quiet                  Only print errors and results
+  -d --debug                  Print all logs to stdout
+  --dont-delete               Don't delete downloaded files after analysis
+  --rename                    Rename IPA files to obscura filename format after analysis
+  --batch-analysis            Enable batch analysis mode for multiple files or URLs
 """
 
 import json
@@ -123,6 +124,7 @@ def main():
     debug_mode = args["--debug"]
     dont_delete = args["--dont-delete"]
     batch_analysis = args["--batch-analysis"]
+    rename_files = args["--rename"]
 
     if debug_mode:
         # Display log messages.
@@ -165,6 +167,22 @@ def main():
                 if not quiet_mode:
                     print(":: Reading paths/URLs from text file...")
                 results = checker.batch_analyze_from_file(batch_path)
+
+            # Handle renaming for batch results
+            if rename_files and not quiet_mode:
+                print("\n:: Renaming files to obscura format...")
+                renamed_count = 0
+                for result in results:
+                    if "error" not in result and not result.get("_metadata", {}).get("was_downloaded", False):
+                        rename_result = checker.rename_to_obscura(result)
+                        if rename_result["success"]:
+                            renamed_count += 1
+                            print(f"   Renamed: {os.path.basename(rename_result['new_path'])}")
+                        elif not quiet_mode:
+                            print(f"   Failed to rename {os.path.basename(result['filePath'])}: {rename_result['error']}")
+                
+                if renamed_count > 0:
+                    print(f"\n:: Successfully renamed {renamed_count} file(s)")
 
             # Display results
             if json_output:
@@ -211,6 +229,21 @@ def main():
                     continue
 
                 results.append(result)
+
+                # Handle renaming for single file
+                if rename_files:
+                    was_downloaded = result.get("_metadata", {}).get("was_downloaded", False)
+                    if not was_downloaded:
+                        rename_result = checker.rename_to_obscura(result)
+                        if rename_result["success"]:
+                            if not quiet_mode:
+                                print(f"\n:: File renamed to: {os.path.basename(rename_result['new_path'])}")
+                            # Update result with new path
+                            result["filePath"] = rename_result["new_path"]
+                        else:
+                            print(f'\033[91mError renaming file:\033[0m {rename_result["error"]}')
+                    elif not quiet_mode:
+                        print("\n:: Skipping rename for downloaded file (use --dont-delete to keep and rename)")
 
                 if json_output:
                     # Remove metadata for JSON output

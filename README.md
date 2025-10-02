@@ -21,6 +21,7 @@ IPAchecker is a tool for analyzing iOS IPA files, It extracts metadata, checks e
 - **Architecture Analysis**: Identifies app architecture (32-bit, 64-bit, or Universal binary)
 - **Batch Processing**: Analyze multiple IPA files from folders or URL/path lists
 - **Remote Downloads**: Download and analyze IPA files directly from URLs using curl
+- **File Renaming**: Automatically rename IPA files to standardized obscura filename format
 - **Console Output**: progress bars, tables, and colored output using the `rich` library
 - **JSON Export**: Export analysis results to JSON format
 - **Obscura Filename**: Creates standardized filenames in iOSObscura format
@@ -40,8 +41,8 @@ The package creates a console script named `ipachecker` once installed, You can 
 ## Usage
 
 ```bash
-ipachecker <input>... [--output <output>] [--json] [--quiet] [--debug] [--dont-delete]
-ipachecker --batch-analysis <path> [--output <output>] [--json] [--quiet] [--debug] [--dont-delete]
+ipachecker <input>... [--output <output>] [--json] [--quiet] [--debug] [--dont-delete] [--rename]
+ipachecker --batch-analysis <path> [--output <output>] [--json] [--quiet] [--debug] [--dont-delete] [--rename]
 ```
 
 ### Arguments
@@ -57,6 +58,7 @@ ipachecker --batch-analysis <path> [--output <output>] [--json] [--quiet] [--deb
 - `-q, --quiet` – Only print errors and results
 - `-d, --debug` – Print all logs to stdout for troubleshooting
 - `--dont-delete` – Don't delete downloaded files after analysis
+- `--rename` – Rename IPA files to obscura filename format after analysis
 - `--batch-analysis` – Enable batch analysis mode for multiple files
 
 ### Examples
@@ -68,11 +70,14 @@ ipachecker /path/to/app.ipa
 # Download and analyze from URL
 ipachecker https://example.com/releases/MyApp-v1.2.ipa
 
+# Analyze and rename to obscura format
+ipachecker app.ipa --rename
+
 # Analyze multiple files
 ipachecker app1.ipa app2.ipa https://example.com/app3.ipa
 
-# Batch analyze all IPAs in a folder
-ipachecker --batch-analysis /path/folder
+# Batch analyze all IPAs in a folder and rename them
+ipachecker --batch-analysis /path/folder --rename
 
 # Batch analyze from URL/path list file
 ipachecker --batch-analysis thereisalist.txt
@@ -83,8 +88,8 @@ ipachecker app.ipa --json --output results.json
 # Debug mode for troubleshooting
 ipachecker app.ipa --debug
 
-# Keep downloaded files
-ipachecker https://example.com/dl/app.ipa --dont-delete
+# Keep downloaded files and rename them
+ipachecker https://example.com/app.ipa --dont-delete --rename
 ```
 
 ### Example Output:
@@ -107,6 +112,35 @@ ipachecker https://example.com/dl/app.ipa --dont-delete
 
 Obscura-format filename:
 Example-(com.example.app)-1.0-(iOS_2.0)-d41d8cd98f00b204e9800998ecf8427e.ipa
+```
+
+## File Renaming
+
+The `--rename` flag automatically renames analyzed IPA files to the standardized Obscura filename format:
+
+```
+{DisplayName}-({BundleID})-{AppVersion}-(iOS_{MinVersion})-{MD5Hash}.ipa
+```
+
+**Key behaviors:**
+- Only renames local files (not downloaded files, unless used with `--dont-delete`)
+- Skips files that already have the correct obscura format name
+- Will not overwrite existing files
+- Works with both single file and batch analysis modes
+- Displays clear status messages for each rename operation
+
+**Examples:**
+
+```bash
+# Rename a single file after analysis
+ipachecker MyApp.ipa --rename
+# Result: MyApp-(com.company.myapp)-1.2.3-(iOS_13.0)-abc123...ipa
+
+# Batch rename all IPAs in a folder
+ipachecker --batch-analysis /path/to/ipas --rename
+
+# Download, analyze, keep em, and rename
+ipachecker https://example.com/app.ipa --dont-delete --rename
 ```
 
 ## Batch Analysis
@@ -137,6 +171,12 @@ Then analyze:
 ipachecker --batch-analysis ipas.txt
 ```
 
+### Batch Rename
+Add the `--rename` flag to automatically rename all successfully analyzed files:
+```bash
+ipachecker --batch-analysis /path/ --rename
+```
+
 ## How it works
 
 1. **Input Processing**: ipachecker determines if the input is a local file path or URL, For URLs, it uses curl to download the file with SSL compatibility and retry logic
@@ -156,9 +196,11 @@ ipachecker --batch-analysis ipas.txt
 
 7. **Result Generation**: Compiles all information into a structured result with standardized Obscura filename format: `{DisplayName}-{BundleID}-{AppVersion}-{iOS_MinVersion}-{MD5Hash}.ipa`
 
-8. **Output**: Presents results in rich console tables or JSON format, with batch summaries for multiple file analysis
+8. **File Renaming** (Optional): When `--rename` flag is used, renames the analyzed IPA file to the obscura format, handling file conflicts and permission errors gracefully
 
-9. **Cleanup**: Automatically removes downloaded temporary files unless `--dont-delete` is specified
+9. **Output**: Presents results in rich console tables or JSON format, with batch summaries for multiple file analysis
+
+10. **Cleanup**: Automatically removes downloaded temporary files unless `--dont-delete` is specified
 
 ## Error Handling
 
@@ -169,6 +211,7 @@ ipachecker provides clear error messages for common issues:
 - **Invalid IPA files**: Corrupted archives or non-IPA files
 - **Missing metadata**: Apps without proper Info.plist files
 - **Analysis errors**: Corrupted binaries or unsupported formats
+- **Rename failures**: Permission issues, file conflicts, or filesystem errors
 
 Use `--debug` flag for detailed troubleshooting info
 

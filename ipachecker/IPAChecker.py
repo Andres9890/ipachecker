@@ -1,4 +1,4 @@
-# This python script provided by norep on discord, credits to him
+# The original python script was provided by norep on discord, credits to him
 import glob
 import hashlib
 import json
@@ -105,6 +105,62 @@ class IPAChecker:
         except Exception as e:
             self.logger.exception("Error during IPA check")
             return {"error": str(e)}
+
+    def rename_to_obscura(self, result: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Rename an IPA file to the obscura filename format
+
+        :param result: Analysis result dictionary containing file info
+        :return:      Dictionary with success status and new path or error message
+        """
+        try:
+            if "error" in result:
+                return {"success": False, "error": "Cannot rename: analysis contains errors"}
+
+            old_path = result.get("filePath")
+            if not old_path or not os.path.exists(old_path):
+                return {"success": False, "error": "Original file not found"}
+
+            obscura_filename = result.get("obscuraFilename")
+            if not obscura_filename:
+                return {"success": False, "error": "Obscura filename not generated"}
+
+            # Get directory of original file
+            directory = os.path.dirname(old_path)
+            new_path = os.path.join(directory, obscura_filename)
+
+            # Check if file already has correct name
+            if old_path == new_path:
+                return {"success": True, "new_path": new_path, "message": "File already has obscura format name"}
+
+            # Check if target file already exists
+            if os.path.exists(new_path):
+                return {
+                    "success": False,
+                    "error": f"Target file already exists: {obscura_filename}"
+                }
+
+            # Perform the rename
+            os.rename(old_path, new_path)
+
+            if self.verbose:
+                self.console.print(f"[green]Renamed:[/green] {os.path.basename(old_path)}")
+                self.console.print(f"[green]     To:[/green] {obscura_filename}")
+
+            return {
+                "success": True,
+                "old_path": old_path,
+                "new_path": new_path,
+                "message": "File renamed successfully"
+            }
+
+        except PermissionError as e:
+            return {"success": False, "error": f"Permission denied: {e}"}
+        except OSError as e:
+            return {"success": False, "error": f"OS error during rename: {e}"}
+        except Exception as e:
+            self.logger.exception("Error during file rename")
+            return {"success": False, "error": str(e)}
 
     def cleanup_downloaded_files(self) -> None:
         """
@@ -488,6 +544,4 @@ class IPAChecker:
 
         self.console.print("\n")
         self.console.print(summary_table)
-
-
-# This python script provided by norep on discord, credits to him
+# The original python script was provided by norep on discord, credits to him
