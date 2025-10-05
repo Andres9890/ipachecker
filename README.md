@@ -4,11 +4,15 @@
 [PyPI Button]: https://img.shields.io/pypi/v/ipachecker?color=blue&label=PyPI
 [PyPI Link]: https://pypi.org/project/ipachecker/ 'PyPI Package.'
 
+[Downloads Badge]: https://static.pepy.tech/badge/ipachecker/month
+[Downloads Link]: https://pepy.tech/project/ipachecker 'Downloads Per Month.'
+
 # IPAchecker
 [![Lint](https://github.com/Andres9890/ipachecker/actions/workflows/lint.yml/badge.svg)](https://github.com/Andres9890/ipachecker/actions/workflows/lint.yml)
 [![Unit Tests](https://github.com/Andres9890/ipachecker/actions/workflows/unit-test.yml/badge.svg)](https://github.com/Andres9890/ipachecker/actions/workflows/unit-test.yml)
 [![License Button]][License Link]
 [![PyPI Button]][PyPI Link]
+[![Downloads Badge]][Downloads Link]
 
 IPAchecker is a tool for analyzing iOS IPA files, It extracts metadata, checks encryption status, determines architecture, and provides detailed information about iOS applications, The tool supports both local path analysis and direct downloads from URLs (using curl), with batch processing for analyzing multiple ipas
 
