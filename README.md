@@ -1,5 +1,5 @@
-[License Button]: https://img.shields.io/badge/License-MIT-white
-[License Link]: https://github.com/Andres9890/ipachecker/blob/main/LICENSE 'MIT License.'
+[License Button]: https://img.shields.io/badge/License-GPL_3.0-white
+[License Link]: https://github.com/Andres9890/ipachecker/blob/main/LICENSE 'GPL-3.0 License.'
 
 [PyPI Button]: https://img.shields.io/pypi/v/ipachecker?color=blue&label=PyPI
 [PyPI Link]: https://pypi.org/project/ipachecker/ 'PyPI Package.'

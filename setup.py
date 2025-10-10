@@ -21,7 +21,7 @@ def get_version():
 setup(
     name='ipachecker',
     version=get_version(),
-    description='A tool for checking if an .ipa file is encrypted',
+    description='A python tool for checking if an .ipa file is encrypted',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='Andres99',
@@ -36,7 +36,7 @@ setup(
         'Development Status :: 4 - Beta',
         'Environment :: Console',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: MIT License',
+        'License :: OSI Approved :: GPL-3.0 License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.8',
@@ -75,5 +75,5 @@ setup(
     },
     include_package_data=True,
     zip_safe=False,
-    license='MIT',
+    license='GPL-3.0',
 )
