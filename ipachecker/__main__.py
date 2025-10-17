@@ -5,8 +5,8 @@
 """ipachecker - Analyze iOS IPA files for metadata and encryption status.
 
 Usage:
-  ipachecker <input>... [--output <output>] [--json] [--quiet] [--debug] [--dont-delete] [--rename]
-  ipachecker --batch-analysis <path> [--output <output>] [--json] [--quiet] [--debug] [--dont-delete] [--rename]
+  ipachecker <input>... [--output <output>] [--json | --xml] [--quiet] [--debug] [--dont-delete] [--rename]
+  ipachecker --batch-analysis <path> [--output <output>] [--json | --xml] [--quiet] [--debug] [--dont-delete] [--rename]
   ipachecker -h | --help
   ipachecker --version
 
@@ -17,8 +17,9 @@ Arguments:
 
 Options:
   -h --help                   Show this screen
-  -o --output <output>        Save results to specified JSON file
+  -o --output <output>        Save results to specified file (format determined by --json or --xml)
   -j --json                   Output results as JSON to stdout
+  -x --xml                    Output results as XML to stdout
   -q --quiet                  Only print errors and results
   -d --debug                  Print all logs to stdout
   --dont-delete               Don't delete downloaded files after analysis
@@ -36,15 +37,16 @@ import docopt
 
 from ipachecker import __version__
 from ipachecker.IPAChecker import IPAChecker
-from ipachecker.utils import get_latest_pypi_version
+from ipachecker.utils import get_latest_pypi_version, results_to_xml
 
 
-def prompt_save_results(results):
+def prompt_save_results(results, xml_format=False):
     """
-    Prompt user if they want to save batch results to JSON file.
+    Prompt user if they want to save batch results to file.
 
-    :param results: List of analysis results
-    :return:       Path to saved file or None if user declined
+    :param results:    List of analysis results
+    :param xml_format: If True, save as XML; otherwise save as JSON
+    :return:          Path to saved file or None if user declined
     """
     try:
         print(f"\n:: Analysis complete! Found {len(results)} result(s).")
@@ -58,18 +60,25 @@ def prompt_save_results(results):
         if errors:
             print(f"   Errors encountered: {errors} files")
 
+        # Determine format and file extension
+        format_name = "XML" if xml_format else "JSON"
+        file_ext = "xml" if xml_format else "json"
+
         # Prompt for saving
         while True:
-            response = input("\n:: Save all results to JSON file? (Y/N): ").strip().upper()
+            response = input(f"\n:: Save all results to {format_name} file? (Y/N): ").strip().upper()
 
             if response in ["Y", "YES"]:
                 # Generate default filename
                 timestamp = __import__("datetime").datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                filename = f"iparesults_{timestamp}.json"
+                filename = f"iparesults_{timestamp}.{file_ext}"
 
                 try:
                     with open(filename, "w", encoding="utf-8") as f:
-                        json.dump(results, f, indent=2, ensure_ascii=False)
+                        if xml_format:
+                            f.write(results_to_xml(results))
+                        else:
+                            json.dump(results, f, indent=2, ensure_ascii=False)
 
                     print(f":: Results saved to: {filename}")
                     return filename
@@ -120,6 +129,7 @@ def main():
     batch_path = args.get("<path>")
     output_file = args["--output"]
     json_output = args["--json"]
+    xml_output = args["--xml"]
     quiet_mode = args["--quiet"]
     debug_mode = args["--debug"]
     dont_delete = args["--dont-delete"]
@@ -189,6 +199,8 @@ def main():
             # Display results
             if json_output:
                 print(json.dumps(results, indent=2))
+            elif xml_output:
+                print(results_to_xml(results))
             elif not quiet_mode:
                 # Print individual results
                 for i, result in enumerate(results, 1):
@@ -207,12 +219,15 @@ def main():
             # Handle output file or prompt for saving
             if output_file:
                 with open(output_file, "w", encoding="utf-8") as f:
-                    json.dump(results, f, indent=2, ensure_ascii=False)
+                    if xml_output:
+                        f.write(results_to_xml(results))
+                    else:
+                        json.dump(results, f, indent=2, ensure_ascii=False)
                 if not quiet_mode:
                     print(f"\n:: Results saved to {output_file}")
-            elif not json_output and not quiet_mode:
+            elif not json_output and not xml_output and not quiet_mode:
                 # Interactive prompt for saving
-                prompt_save_results(results)
+                prompt_save_results(results, xml_output)
 
         else:
             # Regular analysis mode
@@ -251,6 +266,10 @@ def main():
                     # Remove metadata for JSON output
                     display_result = {k: v for k, v in result.items() if k != "_metadata"}
                     print(json.dumps(display_result, indent=2))
+                elif xml_output:
+                    # Remove metadata for XML output
+                    display_result = {k: v for k, v in result.items() if k != "_metadata"}
+                    print(results_to_xml(display_result))
                 elif not quiet_mode:
                     # Remove metadata before displaying
                     display_result = {k: v for k, v in result.items() if k != "_metadata"}
@@ -265,10 +284,16 @@ def main():
                     clean_results.append(clean_result)
 
                 with open(output_file, "w", encoding="utf-8") as f:
-                    if len(clean_results) == 1:
-                        json.dump(clean_results[0], f, indent=2, ensure_ascii=False)
+                    if xml_output:
+                        if len(clean_results) == 1:
+                            f.write(results_to_xml(clean_results[0]))
+                        else:
+                            f.write(results_to_xml(clean_results))
                     else:
-                        json.dump(clean_results, f, indent=2, ensure_ascii=False)
+                        if len(clean_results) == 1:
+                            json.dump(clean_results[0], f, indent=2, ensure_ascii=False)
+                        else:
+                            json.dump(clean_results, f, indent=2, ensure_ascii=False)
                 if not quiet_mode:
                     print(f"\n:: Results saved to {output_file}")
 

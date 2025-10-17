@@ -7,9 +7,11 @@ from unittest.mock import mock_open, patch
 from urllib.error import URLError
 
 from ipachecker.utils import (
+    dict_to_xml,
     format_file_size,
     get_latest_pypi_version,
     is_valid_url,
+    results_to_xml,
     sanitize_filename,
     validate_ipa_file,
 )
@@ -298,3 +300,127 @@ class UtilsTest(unittest.TestCase):
             # Verify correct URL was called
             called_url = mock_urlopen.call_args[0][0]
             self.assertIn("custom-package", called_url.url)
+
+    def test_dict_to_xml_simple_dict(self):
+        # Test simple dictionary conversion
+        data = {"name": "TestApp", "version": "1.0", "encrypted": "True"}
+        result = dict_to_xml(data, "app", 0)
+
+        self.assertIn("<app>", result)
+        self.assertIn("</app>", result)
+        self.assertIn("<name>TestApp</name>", result)
+        self.assertIn("<version>1.0</version>", result)
+        self.assertIn("<encrypted>True</encrypted>", result)
+
+    def test_dict_to_xml_nested_dict(self):
+        # Test nested dictionary conversion
+        data = {"app": {"name": "TestApp", "details": {"version": "1.0", "build": "100"}}}
+        result = dict_to_xml(data, "root", 0)
+
+        self.assertIn("<root>", result)
+        self.assertIn("</root>", result)
+        self.assertIn("<app>", result)
+        self.assertIn("</app>", result)
+        self.assertIn("<details>", result)
+        self.assertIn("</details>", result)
+        self.assertIn("<version>1.0</version>", result)
+        self.assertIn("<build>100</build>", result)
+
+    def test_dict_to_xml_with_list(self):
+        # Test dictionary with list
+        data = {"apps": ["App1", "App2", "App3"]}
+        result = dict_to_xml(data, "root", 0)
+
+        self.assertIn("<root>", result)
+        self.assertIn("</root>", result)
+        self.assertIn("<apps>", result)
+        self.assertIn("</apps>", result)
+        self.assertIn("<item>App1</item>", result)
+        self.assertIn("<item>App2</item>", result)
+        self.assertIn("<item>App3</item>", result)
+
+    def test_dict_to_xml_special_characters(self):
+        # Test XML special character escaping
+        data = {"text": '<tag>value & "quoted" \'text\'</tag>'}
+        result = dict_to_xml(data, "root", 0)
+
+        self.assertIn("&lt;tag&gt;", result)
+        self.assertIn("&amp;", result)
+        self.assertIn("&quot;", result)
+        self.assertIn("&apos;", result)
+        self.assertNotIn("<tag>value", result)
+
+    def test_dict_to_xml_invalid_element_names(self):
+        # Test sanitization of invalid XML element names
+        data = {"invalid-key@123": "value", "another.key!": "value2"}
+        result = dict_to_xml(data, "root", 0)
+
+        # Invalid characters should be replaced with underscores
+        self.assertIn("<invalid-key_123>", result)
+        self.assertIn("<another_key_>", result)
+
+    def test_dict_to_xml_list_of_dicts(self):
+        # Test list of dictionaries
+        data = [{"name": "App1", "version": "1.0"}, {"name": "App2", "version": "2.0"}]
+        result = dict_to_xml(data, "apps", 0)
+
+        self.assertIn("<apps>", result)
+        self.assertIn("</apps>", result)
+        self.assertIn("<item>", result)
+        self.assertIn("</item>", result)
+        self.assertIn("<name>App1</name>", result)
+        self.assertIn("<name>App2</name>", result)
+        self.assertIn("<version>1.0</version>", result)
+        self.assertIn("<version>2.0</version>", result)
+
+    def test_results_to_xml_single_result(self):
+        # Test single result conversion
+        result = {"appName": "TestApp", "bundleId": "com.test.app", "encrypted": "False"}
+        xml_output = results_to_xml(result)
+
+        self.assertIn('<?xml version="1.0" encoding="UTF-8"?>', xml_output)
+        self.assertIn("<result>", xml_output)
+        self.assertIn("</result>", xml_output)
+        self.assertIn("<appName>TestApp</appName>", xml_output)
+        self.assertIn("<bundleId>com.test.app</bundleId>", xml_output)
+        self.assertIn("<encrypted>False</encrypted>", xml_output)
+
+    def test_results_to_xml_multiple_results(self):
+        # Test multiple results conversion
+        results = [
+            {"appName": "App1", "bundleId": "com.test.app1"},
+            {"appName": "App2", "bundleId": "com.test.app2"},
+        ]
+        xml_output = results_to_xml(results)
+
+        self.assertIn('<?xml version="1.0" encoding="UTF-8"?>', xml_output)
+        self.assertIn("<results>", xml_output)
+        self.assertIn("</results>", xml_output)
+        self.assertIn("<item>", xml_output)
+        self.assertIn("</item>", xml_output)
+        self.assertIn("<appName>App1</appName>", xml_output)
+        self.assertIn("<appName>App2</appName>", xml_output)
+
+    def test_results_to_xml_complex_result(self):
+        # Test with complex nested structure similar to actual IPA results
+        result = {
+            "appName": "Instagram",
+            "displayName": "Instagram",
+            "bundleId": "com.burbn.instagram",
+            "appVersion": "245.0",
+            "minIOS": "13.0",
+            "architecture": "64-bit",
+            "encrypted": "True",
+            "md5": "d41d8cd98f00b204e9800998ecf8427e",
+            "fileSize": "125829120",
+            "filePath": "/path/to/instagram.ipa",
+        }
+        xml_output = results_to_xml(result)
+
+        self.assertIn('<?xml version="1.0" encoding="UTF-8"?>', xml_output)
+        self.assertIn("<result>", xml_output)
+        self.assertIn("</result>", xml_output)
+        self.assertIn("<appName>Instagram</appName>", xml_output)
+        self.assertIn("<bundleId>com.burbn.instagram</bundleId>", xml_output)
+        self.assertIn("<encrypted>True</encrypted>", xml_output)
+        self.assertIn("<fileSize>125829120</fileSize>", xml_output)

@@ -14,7 +14,7 @@
 [![PyPI Button]][PyPI Link]
 [![Downloads Badge]][Downloads Link]
 
-IPAchecker is a tool for analyzing iOS IPA files, It extracts metadata, checks encryption status, determines architecture, and provides detailed information about iOS applications, The tool supports both local path analysis and direct downloads from URLs (using curl), with batch processing for analyzing multiple ipas
+IPAchecker is a python tool for analyzing iOS IPA files, It extracts metadata, checks encryption status, determines architecture, and provides detailed information about iOS applications, The tool supports both local path analysis and direct downloads from URLs (using curl), with batch processing for analyzing multiple ipas
 
 > Python script provided by norep on discord, credits to him
 
@@ -28,6 +28,7 @@ IPAchecker is a tool for analyzing iOS IPA files, It extracts metadata, checks e
 - **File Renaming**: Automatically rename IPA files to standardized obscura filename format
 - **Console Output**: progress bars, tables, and colored output using the `rich` library
 - **JSON Export**: Export analysis results to JSON format
+- **XML Export**: Export analysis results to XML format
 - **Obscura Filename**: Creates standardized filenames in iOSObscura format
 - **MD5 Hash**: Generates file hash
 - **Automatic Cleanup**: Optionally removes downloaded files after analysis
@@ -45,8 +46,8 @@ The package creates a console script named `ipachecker` once installed, You can 
 ## Usage
 
 ```bash
-ipachecker <input>... [--output <output>] [--json] [--quiet] [--debug] [--dont-delete] [--rename]
-ipachecker --batch-analysis <path> [--output <output>] [--json] [--quiet] [--debug] [--dont-delete] [--rename]
+ipachecker <input>... [--output <output>] [--json | --xml] [--quiet] [--debug] [--dont-delete] [--rename]
+ipachecker --batch-analysis <path> [--output <output>] [--json | --xml] [--quiet] [--debug] [--dont-delete] [--rename]
 ```
 
 ### Arguments
@@ -57,8 +58,9 @@ ipachecker --batch-analysis <path> [--output <output>] [--json] [--quiet] [--deb
 ### Options
 
 - `-h, --help` – Show help message
-- `-o, --output <output>` – Save results to specified JSON file
+- `-o, --output <output>` – Save results to specified file (format determined by --json or --xml)
 - `-j, --json` – Output results as JSON to stdout
+- `-x, --xml` – Output results as XML to stdout
 - `-q, --quiet` – Only print errors and results
 - `-d, --debug` – Print all logs to stdout for troubleshooting
 - `--dont-delete` – Don't delete downloaded files after analysis
@@ -88,6 +90,12 @@ ipachecker --batch-analysis thereisalist.txt
 
 # Export results to JSON
 ipachecker app.ipa --json --output results.json
+
+# Export results to XML
+ipachecker app.ipa --xml --output results.xml
+
+# Output XML to stdout
+ipachecker app.ipa --xml
 
 # Debug mode for troubleshooting
 ipachecker app.ipa --debug
@@ -222,12 +230,12 @@ Use `--debug` flag for detailed troubleshooting info
 ## Integration
 
 ### JSON Output
-Use `--json` arg for programmatic integration:
+Use `--json` arg for JSON format output:
 
 ```json
 {
   "appName": "Instagram",
-  "displayName": "Instagram", 
+  "displayName": "Instagram",
   "bundleId": "com.burbn.instagram",
   "appVersion": "245.0",
   "minIOS": "13.0",
@@ -239,6 +247,27 @@ Use `--json` arg for programmatic integration:
   "fileSize": 125829120,
   "filePath": "/path/to/instagram.ipa"
 }
+```
+
+### XML Output
+Use `--xml` arg for XML format output:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<result>
+  <appName>Instagram</appName>
+  <displayName>Instagram</displayName>
+  <bundleId>com.burbn.instagram</bundleId>
+  <appVersion>245.0</appVersion>
+  <minIOS>13.0</minIOS>
+  <architecture>64-bit</architecture>
+  <encrypted>True</encrypted>
+  <obscuraFilename>Instagram-(com.burbn.instagram)-245.0-(iOS_13.0)-d41d8cd98f00b204e9800998ecf8427e.ipa</obscuraFilename>
+  <originalFilename>instagram.ipa</originalFilename>
+  <md5>d41d8cd98f00b204e9800998ecf8427e</md5>
+  <fileSize>125829120</fileSize>
+  <filePath>/path/to/instagram.ipa</filePath>
+</result>
 ```
 
 ### Exit Codes

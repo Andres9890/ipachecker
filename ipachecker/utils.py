@@ -98,6 +98,74 @@ def validate_ipa_file(filepath: str) -> Tuple[bool, Optional[str]]:
     return True, None
 
 
+def dict_to_xml(data, root_name="root", indent=0):
+    """
+    Convert a Python dictionary or list to XML format.
+
+    :param data:       Dictionary or list to convert
+    :param root_name:  Name for the root XML element
+    :param indent:     Current indentation level
+    :return:          XML string representation
+    """
+    xml_output = []
+    indent_str = "  " * indent
+
+    if isinstance(data, dict):
+        xml_output.append(f"{indent_str}<{root_name}>")
+        for key, value in data.items():
+            # Sanitize key names to be valid XML element names
+            safe_key = re.sub(r"[^a-zA-Z0-9_-]", "_", str(key))
+            if isinstance(value, (dict, list)):
+                xml_output.append(dict_to_xml(value, safe_key, indent + 1))
+            else:
+                # Escape special XML characters
+                escaped_value = (
+                    str(value)
+                    .replace("&", "&amp;")
+                    .replace("<", "&lt;")
+                    .replace(">", "&gt;")
+                    .replace('"', "&quot;")
+                    .replace("'", "&apos;")
+                )
+                xml_output.append(f"{indent_str}  <{safe_key}>{escaped_value}</{safe_key}>")
+        xml_output.append(f"{indent_str}</{root_name}>")
+    elif isinstance(data, list):
+        xml_output.append(f"{indent_str}<{root_name}>")
+        for item in data:
+            xml_output.append(dict_to_xml(item, "item", indent + 1))
+        xml_output.append(f"{indent_str}</{root_name}>")
+    else:
+        # Handle scalar values
+        escaped_value = (
+            str(data)
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace('"', "&quot;")
+            .replace("'", "&apos;")
+        )
+        xml_output.append(f"{indent_str}<{root_name}>{escaped_value}</{root_name}>")
+
+    return "\n".join(xml_output)
+
+
+def results_to_xml(results):
+    """
+    Convert IPA analysis results to XML format.
+
+    :param results: Single result dict or list of result dicts
+    :return:       XML string with proper header
+    """
+    xml_header = '<?xml version="1.0" encoding="UTF-8"?>'
+
+    if isinstance(results, list):
+        xml_body = dict_to_xml(results, "results", 0)
+    else:
+        xml_body = dict_to_xml(results, "result", 0)
+
+    return f"{xml_header}\n{xml_body}"
+
+
 def get_latest_pypi_version(package_name: str = "ipachecker") -> Optional[str]:
     """
     Request PyPI for the latest version

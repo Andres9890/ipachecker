@@ -21,7 +21,7 @@ def get_version():
 setup(
     name='ipachecker',
     version=get_version(),
-    description='A python tool for checking if an .ipa file is encrypted',
+    description='A python tool for analyzing .ipa files',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='Andres99',
