@@ -19,7 +19,13 @@ from rich.console import Console
 from rich.table import Table
 
 try:
-    from rich.progress import BarColumn, PercentageColumn, Progress, SpinnerColumn, TextColumn
+    from rich.progress import (
+        BarColumn,
+        PercentageColumn,
+        Progress,
+        SpinnerColumn,
+        TextColumn,
+    )
 except ImportError:
     # Fallback for older versions of rich
     try:
@@ -38,7 +44,12 @@ from ipachecker.utils import is_valid_url, sanitize_filename
 
 class IPAChecker:
 
-    def __init__(self, verbose: bool = False, work_dir: str = "~/.ipachecker", delete_downloaded: bool = True) -> None:
+    def __init__(
+        self,
+        verbose: bool = False,
+        work_dir: str = "~/.ipachecker",
+        delete_downloaded: bool = True,
+    ) -> None:
         """
         IPAChecker - Analyze iOS IPA files for metadata and encryption status.
 
@@ -115,7 +126,10 @@ class IPAChecker:
         """
         try:
             if "error" in result:
-                return {"success": False, "error": "Cannot rename: analysis contains errors"}
+                return {
+                    "success": False,
+                    "error": "Cannot rename: analysis contains errors",
+                }
 
             old_path = result.get("filePath")
             if not old_path or not os.path.exists(old_path):
@@ -131,20 +145,34 @@ class IPAChecker:
 
             # Check if file already has correct name
             if old_path == new_path:
-                return {"success": True, "new_path": new_path, "message": "File already has obscura format name"}
+                return {
+                    "success": True,
+                    "new_path": new_path,
+                    "message": "File already has obscura format name",
+                }
 
             # Check if target file already exists
             if os.path.exists(new_path):
-                return {"success": False, "error": f"Target file already exists: {obscura_filename}"}
+                return {
+                    "success": False,
+                    "error": f"Target file already exists: {obscura_filename}",
+                }
 
             # Perform the rename
             os.rename(old_path, new_path)
 
             if self.verbose:
-                self.console.print(f"[green]Renamed:[/green] {os.path.basename(old_path)}")
+                self.console.print(
+                    f"[green]Renamed:[/green] {os.path.basename(old_path)}"
+                )
                 self.console.print(f"[green]     To:[/green] {obscura_filename}")
 
-            return {"success": True, "old_path": old_path, "new_path": new_path, "message": "File renamed successfully"}
+            return {
+                "success": True,
+                "old_path": old_path,
+                "new_path": new_path,
+                "message": "File renamed successfully",
+            }
 
         except PermissionError as e:
             return {"success": False, "error": f"Permission denied: {e}"}
@@ -168,13 +196,17 @@ class IPAChecker:
                     os.remove(file_path)
                     cleaned_count += 1
                     if self.verbose:
-                        self.console.print(f"[dim]Deleted downloaded file: {file_path}[/dim]")
+                        self.console.print(
+                            f"[dim]Deleted downloaded file: {file_path}[/dim]"
+                        )
                 self.downloaded_files.discard(file_path)
             except Exception as e:
                 self.logger.error(f"Failed to delete {file_path}: {e}")
 
         if self.verbose and cleaned_count > 0:
-            self.console.print(f"[green]Cleaned up {cleaned_count} downloaded file(s)[/green]")
+            self.console.print(
+                f"[green]Cleaned up {cleaned_count} downloaded file(s)[/green]"
+            )
 
     def batch_analyze_folder(self, folder_path: str) -> List[Dict[str, Any]]:
         """
@@ -197,11 +229,15 @@ class IPAChecker:
 
         results = []
         if self.verbose:
-            self.console.print(f"[blue]Found {len(ipa_files)} .ipa file(s) in folder[/blue]")
+            self.console.print(
+                f"[blue]Found {len(ipa_files)} .ipa file(s) in folder[/blue]"
+            )
 
         for ipa_file in ipa_files:
             if self.verbose:
-                self.console.print(f"\n[yellow]Processing:[/yellow] {os.path.basename(ipa_file)}")
+                self.console.print(
+                    f"\n[yellow]Processing:[/yellow] {os.path.basename(ipa_file)}"
+                )
 
             result = self.check_ipa(ipa_file)
             results.append(result)
@@ -233,7 +269,9 @@ class IPAChecker:
 
         for i, line in enumerate(lines, 1):
             if self.verbose:
-                self.console.print(f"\n[yellow]Processing {i}/{len(lines)}:[/yellow] {line}")
+                self.console.print(
+                    f"\n[yellow]Processing {i}/{len(lines)}:[/yellow] {line}"
+                )
 
             result = self.check_ipa(line)
             results.append(result)
@@ -293,7 +331,9 @@ class IPAChecker:
 
             if self.verbose:
                 # Show curl progress
-                process: subprocess.Popen[str] = subprocess.Popen(cmd, stderr=subprocess.PIPE, text=True)  # nosec B603
+                process: subprocess.Popen[str] = subprocess.Popen(
+                    cmd, stderr=subprocess.PIPE, text=True
+                )  # nosec B603
 
                 if process.stderr:
                     for line in iter(process.stderr.readline, ""):
@@ -306,17 +346,23 @@ class IPAChecker:
                     sys.stderr.write("\n")
             else:
                 # Silent download
-                process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # nosec B603
+                process = subprocess.Popen(
+                    cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                )  # nosec B603
                 process.wait()
 
             if process.returncode != 0:
                 if self.verbose:
-                    self.console.print(f"[red]Curl failed with return code: {process.returncode}[/red]")
+                    self.console.print(
+                        f"[red]Curl failed with return code: {process.returncode}[/red]"
+                    )
                 return None
 
             if not os.path.exists(download_path) or os.path.getsize(download_path) == 0:
                 if self.verbose:
-                    self.console.print(f"[red]Downloaded file is missing or empty[/red]")
+                    self.console.print(
+                        f"[red]Downloaded file is missing or empty[/red]"
+                    )
                 return None
 
             return download_path
@@ -349,53 +395,73 @@ class IPAChecker:
             if PercentageColumn is not None:
                 progress_columns.append(PercentageColumn())
 
-            with Progress(*progress_columns, console=self.console, disable=not self.verbose) as progress:
+            with Progress(
+                *progress_columns, console=self.console, disable=not self.verbose
+            ) as progress:
 
                 task = progress.add_task("Analyzing IPA...", total=100)
 
                 # Step 1: Extract IPA (20%)
-                progress.update(task, description="Extracting IPA file...", completed=10)
+                progress.update(
+                    task, description="Extracting IPA file...", completed=10
+                )
                 self._extract_ipa(ipa_file, extract_dir)
                 progress.update(task, completed=20)
 
                 # Step 2: Read metadata (40%)
-                progress.update(task, description="Reading app metadata...", completed=30)
+                progress.update(
+                    task, description="Reading app metadata...", completed=30
+                )
                 properties = self._get_properties(extract_dir)
                 if not properties:
                     return {"error": "Failed to read app metadata"}
                 progress.update(task, completed=40)
 
                 # Step 3: Find executable (60%)
-                progress.update(task, description="Locating app executable...", completed=50)
+                progress.update(
+                    task, description="Locating app executable...", completed=50
+                )
                 exec_name = properties.get("CFBundleExecutable")
-                macho_file_list = glob.glob(os.path.join(extract_dir, "Payload", "*.app", exec_name))
+                macho_file_list = glob.glob(
+                    os.path.join(extract_dir, "Payload", "*.app", exec_name)
+                )
                 if not macho_file_list:
                     return {"error": "App executable not found"}
                 macho_file = macho_file_list[0]
                 progress.update(task, completed=60)
 
                 # Step 4: Check encryption (80%)
-                progress.update(task, description="Checking encryption status...", completed=70)
+                progress.update(
+                    task, description="Checking encryption status...", completed=70
+                )
                 is_encrypted = self._get_cryptid(macho_file)
                 progress.update(task, completed=80)
 
                 # Step 5: Get architecture (90%)
-                progress.update(task, description="Analyzing architecture...", completed=85)
+                progress.update(
+                    task, description="Analyzing architecture...", completed=85
+                )
                 architecture = self._get_architecture(macho_file)
                 progress.update(task, completed=90)
 
                 # Step 6: Calculate hash (100%)
-                progress.update(task, description="Calculating file hash...", completed=95)
+                progress.update(
+                    task, description="Calculating file hash...", completed=95
+                )
                 md5_hash = self._calculate_md5(ipa_file)
                 progress.update(task, completed=100, description="Analysis complete!")
 
             # Generate results
-            display_name = properties.get("CFBundleDisplayName", properties.get("CFBundleName", "Unknown"))
+            display_name = properties.get(
+                "CFBundleDisplayName", properties.get("CFBundleName", "Unknown")
+            )
             bundle_id = properties.get("CFBundleIdentifier", "unknown")
             version = properties.get("CFBundleVersion", "1.0")
             min_ios = properties.get("MinimumOSVersion", "2.0")
 
-            obscura_filename = f"{display_name}-({bundle_id})-{version}-(iOS_{min_ios})-{md5_hash}.ipa"
+            obscura_filename = (
+                f"{display_name}-({bundle_id})-{version}-(iOS_{min_ios})-{md5_hash}.ipa"
+            )
 
             return {
                 "appName": properties.get("CFBundleName", "Unknown"),
@@ -424,7 +490,9 @@ class IPAChecker:
 
     def _get_properties(self, extract_dir: str) -> Optional[Dict[str, Any]]:
         """Read app metadata from Info.plist."""
-        info_plist_list = glob.glob(os.path.join(extract_dir, "Payload", "*.app", "Info.plist"))
+        info_plist_list = glob.glob(
+            os.path.join(extract_dir, "Payload", "*.app", "Info.plist")
+        )
 
         if not info_plist_list:
             return None
@@ -445,10 +513,14 @@ class IPAChecker:
             for header in macho.headers:
                 load_commands = header.commands
                 for load_command in load_commands:
-                    if isinstance(load_command[1], macholib.mach_o.encryption_info_command):
+                    if isinstance(
+                        load_command[1], macholib.mach_o.encryption_info_command
+                    ):
                         if load_command[1].cryptid == 0:
                             return False
-                    if isinstance(load_command[1], macholib.mach_o.encryption_info_command_64):
+                    if isinstance(
+                        load_command[1], macholib.mach_o.encryption_info_command_64
+                    ):
                         if load_command[1].cryptid == 0:
                             return False
             return True
@@ -532,7 +604,9 @@ class IPAChecker:
         if valid_results:
             encrypted_count = sum(1 for r in valid_results if r.get("encrypted", True))
             summary_table.add_row("Encrypted Apps", str(encrypted_count))
-            summary_table.add_row("Decrypted Apps", str(len(valid_results) - encrypted_count))
+            summary_table.add_row(
+                "Decrypted Apps", str(len(valid_results) - encrypted_count)
+            )
 
         self.console.print("\n")
         self.console.print(summary_table)

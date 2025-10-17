@@ -66,11 +66,17 @@ def prompt_save_results(results, xml_format=False):
 
         # Prompt for saving
         while True:
-            response = input(f"\n:: Save all results to {format_name} file? (Y/N): ").strip().upper()
+            response = (
+                input(f"\n:: Save all results to {format_name} file? (Y/N): ")
+                .strip()
+                .upper()
+            )
 
             if response in ["Y", "YES"]:
                 # Generate default filename
-                timestamp = __import__("datetime").datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                timestamp = (
+                    __import__("datetime").datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                )
                 filename = f"iparesults_{timestamp}.{file_ext}"
 
                 try:
@@ -143,7 +149,10 @@ def main():
 
         ch = logging.StreamHandler(sys.stdout)
         ch.setLevel(logging.DEBUG)
-        formatter = logging.Formatter("\033[92m[DEBUG]\033[0m %(asctime)s - %(name)s - %(levelname)s - " "%(message)s")
+        formatter = logging.Formatter(
+            "\033[92m[DEBUG]\033[0m %(asctime)s - %(name)s - %(levelname)s - "
+            "%(message)s"
+        )
         ch.setFormatter(formatter)
         root.addHandler(ch)
 
@@ -183,11 +192,15 @@ def main():
                 print("\n:: Renaming files to obscura format...")
                 renamed_count = 0
                 for result in results:
-                    if "error" not in result and not result.get("_metadata", {}).get("was_downloaded", False):
+                    if "error" not in result and not result.get("_metadata", {}).get(
+                        "was_downloaded", False
+                    ):
                         rename_result = checker.rename_to_obscura(result)
                         if rename_result["success"]:
                             renamed_count += 1
-                            print(f"   Renamed: {os.path.basename(rename_result['new_path'])}")
+                            print(
+                                f"   Renamed: {os.path.basename(rename_result['new_path'])}"
+                            )
                         elif not quiet_mode:
                             print(
                                 f"   Failed to rename {os.path.basename(result['filePath'])}: {rename_result['error']}"
@@ -206,11 +219,15 @@ def main():
                 for i, result in enumerate(results, 1):
                     if "error" in result:
                         source = result.get("_metadata", {}).get("source", "Unknown")
-                        print(f'\n\033[91mError analyzing item {i} ({source}):\033[0m {result["error"]}')
+                        print(
+                            f'\n\033[91mError analyzing item {i} ({source}):\033[0m {result["error"]}'
+                        )
                     else:
                         print(f"\n:: Result {i}/{len(results)}:")
                         # Remove metadata before displaying
-                        display_result = {k: v for k, v in result.items() if k != "_metadata"}
+                        display_result = {
+                            k: v for k, v in result.items() if k != "_metadata"
+                        }
                         checker.print_result_table(display_result)
 
                 # Print batch summary
@@ -242,37 +259,53 @@ def main():
                 result = checker.check_ipa(input_item)
 
                 if "error" in result:
-                    print(f'\033[91mError analyzing {input_item}:\033[0m {result["error"]}')
+                    print(
+                        f'\033[91mError analyzing {input_item}:\033[0m {result["error"]}'
+                    )
                     continue
 
                 results.append(result)
 
                 # Handle renaming for single file
                 if rename_files:
-                    was_downloaded = result.get("_metadata", {}).get("was_downloaded", False)
+                    was_downloaded = result.get("_metadata", {}).get(
+                        "was_downloaded", False
+                    )
                     if not was_downloaded:
                         rename_result = checker.rename_to_obscura(result)
                         if rename_result["success"]:
                             if not quiet_mode:
-                                print(f"\n:: File renamed to: {os.path.basename(rename_result['new_path'])}")
+                                print(
+                                    f"\n:: File renamed to: {os.path.basename(rename_result['new_path'])}"
+                                )
                             # Update result with new path
                             result["filePath"] = rename_result["new_path"]
                         else:
-                            print(f'\033[91mError renaming file:\033[0m {rename_result["error"]}')
+                            print(
+                                f'\033[91mError renaming file:\033[0m {rename_result["error"]}'
+                            )
                     elif not quiet_mode:
-                        print("\n:: Skipping rename for downloaded file (use --dont-delete to keep and rename)")
+                        print(
+                            "\n:: Skipping rename for downloaded file (use --dont-delete to keep and rename)"
+                        )
 
                 if json_output:
                     # Remove metadata for JSON output
-                    display_result = {k: v for k, v in result.items() if k != "_metadata"}
+                    display_result = {
+                        k: v for k, v in result.items() if k != "_metadata"
+                    }
                     print(json.dumps(display_result, indent=2))
                 elif xml_output:
                     # Remove metadata for XML output
-                    display_result = {k: v for k, v in result.items() if k != "_metadata"}
+                    display_result = {
+                        k: v for k, v in result.items() if k != "_metadata"
+                    }
                     print(results_to_xml(display_result))
                 elif not quiet_mode:
                     # Remove metadata before displaying
-                    display_result = {k: v for k, v in result.items() if k != "_metadata"}
+                    display_result = {
+                        k: v for k, v in result.items() if k != "_metadata"
+                    }
                     checker.print_result_table(display_result)
 
             # Save to file if requested
@@ -317,7 +350,9 @@ def main():
         # Version check after operations complete (success or fail)
         latest_version = get_latest_pypi_version()
         if latest_version and latest_version != __version__:
-            print(f"\033[93mA newer version of ipachecker is available: \033[92m{latest_version}\033[0m")
+            print(
+                f"\033[93mA newer version of ipachecker is available: \033[92m{latest_version}\033[0m"
+            )
             print("Update with: pip install --upgrade ipachecker\n")
 
 

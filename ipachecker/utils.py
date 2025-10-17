@@ -89,7 +89,10 @@ def validate_ipa_file(filepath: str) -> Tuple[bool, Optional[str]]:
             files = zf.namelist()
             has_payload = any(f.startswith("Payload/") for f in files)
             if not has_payload:
-                return False, "File does not appear to be a valid IPA (missing Payload directory)"
+                return (
+                    False,
+                    "File does not appear to be a valid IPA (missing Payload directory)",
+                )
     except zipfile.BadZipFile:
         return False, "File is not a valid ZIP archive"
     except Exception as e:
@@ -127,7 +130,9 @@ def dict_to_xml(data, root_name="root", indent=0):
                     .replace('"', "&quot;")
                     .replace("'", "&apos;")
                 )
-                xml_output.append(f"{indent_str}  <{safe_key}>{escaped_value}</{safe_key}>")
+                xml_output.append(
+                    f"{indent_str}  <{safe_key}>{escaped_value}</{safe_key}>"
+                )
         xml_output.append(f"{indent_str}</{root_name}>")
     elif isinstance(data, list):
         xml_output.append(f"{indent_str}<{root_name}>")

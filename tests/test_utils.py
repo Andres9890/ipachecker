@@ -53,7 +53,12 @@ class UtilsTest(unittest.TestCase):
                     self.assertFalse(is_valid_url(url))
 
     def test_sanitize_filename_with_valid_names(self):
-        valid_names = ["normal_filename.ipa", "app-name-v2.ipa", "MyApp_1.0.0.ipa", "test123.ipa"]
+        valid_names = [
+            "normal_filename.ipa",
+            "app-name-v2.ipa",
+            "MyApp_1.0.0.ipa",
+            "test123.ipa",
+        ]
 
         for name in valid_names:
             with self.subTest(name=name):
@@ -114,7 +119,12 @@ class UtilsTest(unittest.TestCase):
                 self.assertEqual(result, expected)
 
     def test_format_file_size_kilobytes(self):
-        test_cases = [(1024, "1.0 KB"), (1536, "1.5 KB"), (2048, "2.0 KB"), (1024 * 100, "100.0 KB")]
+        test_cases = [
+            (1024, "1.0 KB"),
+            (1536, "1.5 KB"),
+            (2048, "2.0 KB"),
+            (1024 * 100, "100.0 KB"),
+        ]
 
         for size_bytes, expected in test_cases:
             with self.subTest(size=size_bytes):
@@ -122,7 +132,11 @@ class UtilsTest(unittest.TestCase):
                 self.assertEqual(result, expected)
 
     def test_format_file_size_megabytes(self):
-        test_cases = [(1024 * 1024, "1.0 MB"), (1024 * 1024 * 2.5, "2.5 MB"), (1024 * 1024 * 100, "100.0 MB")]
+        test_cases = [
+            (1024 * 1024, "1.0 MB"),
+            (1024 * 1024 * 2.5, "2.5 MB"),
+            (1024 * 1024 * 100, "100.0 MB"),
+        ]
 
         for size_bytes, expected in test_cases:
             with self.subTest(size=size_bytes):
@@ -130,7 +144,10 @@ class UtilsTest(unittest.TestCase):
                 self.assertEqual(result, expected)
 
     def test_format_file_size_gigabytes(self):
-        test_cases = [(1024 * 1024 * 1024, "1.0 GB"), (1024 * 1024 * 1024 * 2.5, "2.5 GB")]
+        test_cases = [
+            (1024 * 1024 * 1024, "1.0 GB"),
+            (1024 * 1024 * 1024 * 2.5, "2.5 GB"),
+        ]
 
         for size_bytes, expected in test_cases:
             with self.subTest(size=size_bytes):
@@ -292,7 +309,9 @@ class UtilsTest(unittest.TestCase):
         with patch("urllib.request.urlopen") as mock_urlopen:
             mock_response_data = {"info": {"version": "1.5.0"}}
             mock_response = mock_open(read_data=json.dumps(mock_response_data).encode())
-            mock_urlopen.return_value.__enter__.return_value = mock_response.return_value
+            mock_urlopen.return_value.__enter__.return_value = (
+                mock_response.return_value
+            )
 
             result = get_latest_pypi_version("custom-package")
 
@@ -314,7 +333,9 @@ class UtilsTest(unittest.TestCase):
 
     def test_dict_to_xml_nested_dict(self):
         # Test nested dictionary conversion
-        data = {"app": {"name": "TestApp", "details": {"version": "1.0", "build": "100"}}}
+        data = {
+            "app": {"name": "TestApp", "details": {"version": "1.0", "build": "100"}}
+        }
         result = dict_to_xml(data, "root", 0)
 
         self.assertIn("<root>", result)
@@ -341,7 +362,7 @@ class UtilsTest(unittest.TestCase):
 
     def test_dict_to_xml_special_characters(self):
         # Test XML special character escaping
-        data = {"text": '<tag>value & "quoted" \'text\'</tag>'}
+        data = {"text": "<tag>value & \"quoted\" 'text'</tag>"}
         result = dict_to_xml(data, "root", 0)
 
         self.assertIn("&lt;tag&gt;", result)
@@ -375,7 +396,11 @@ class UtilsTest(unittest.TestCase):
 
     def test_results_to_xml_single_result(self):
         # Test single result conversion
-        result = {"appName": "TestApp", "bundleId": "com.test.app", "encrypted": "False"}
+        result = {
+            "appName": "TestApp",
+            "bundleId": "com.test.app",
+            "encrypted": "False",
+        }
         xml_output = results_to_xml(result)
 
         self.assertIn('<?xml version="1.0" encoding="UTF-8"?>', xml_output)

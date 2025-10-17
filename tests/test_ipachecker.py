@@ -12,7 +12,11 @@ import requests_mock
 from ipachecker import __version__
 from ipachecker.IPAChecker import IPAChecker
 
-from .constants import sample_decrypted_ipa_result, sample_encrypted_ipa_result, sample_info_plist
+from .constants import (
+    sample_decrypted_ipa_result,
+    sample_encrypted_ipa_result,
+    sample_info_plist,
+)
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -183,7 +187,9 @@ class IPACheckerTests(unittest.TestCase):
         expected_path = os.path.join(self.test_dir, "test.ipa")
 
         # Mock the file creation
-        with patch("os.path.exists") as mock_exists, patch("os.path.getsize") as mock_getsize:
+        with patch("os.path.exists") as mock_exists, patch(
+            "os.path.getsize"
+        ) as mock_getsize:
             mock_exists.return_value = True
             mock_getsize.return_value = 1000
 
@@ -437,7 +443,11 @@ class IPACheckerTests(unittest.TestCase):
 
     def test_print_batch_summary(self):
         # Test batch summary printing
-        results = [sample_decrypted_ipa_result.copy(), sample_encrypted_ipa_result.copy(), {"error": "Test error"}]
+        results = [
+            sample_decrypted_ipa_result.copy(),
+            sample_encrypted_ipa_result.copy(),
+            {"error": "Test error"},
+        ]
 
         # Should not raise exception
         self.checker.print_batch_summary(results)
